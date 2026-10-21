@@ -533,7 +533,6 @@ pre.hljs { border-radius: 6px; font-size: 11.5px; padding: 12px 14px; overflow-x
     <div class="nav-item sub" data-target="preauth-family"><span class="method-badge">—</span>Pre-auth Guide</div>
     <div class="nav-item sub" data-target="preauth"><span class="method-badge">PA</span>Pre-auth</div>
     <div class="nav-item sub" data-target="preauthcomplete"><span class="method-badge">AC</span>Pre-auth Complete</div>
-    <div class="nav-item sub" data-target="preauthtopup"><span class="method-badge">PT</span>Incremental Pre-auth</div>
     <div class="nav-item sub" data-target="preauthreversal"><span class="method-badge">PR</span>Pre-auth Reversal</div>
     <div class="nav-item" data-target="searchtransaction"><span class="method-badge">POST</span>Search Transaction</div>
   </div>
@@ -884,7 +883,6 @@ pre.hljs { border-radius: 6px; font-size: 11.5px; padding: 12px 14px; overflow-x
             <tr><td>Balance Enquiry</td><td>POST</td><td>transaction</td></tr>
             <tr><td>Pre-auth</td><td>POST</td><td>transaction</td></tr>
             <tr><td>Pre-auth Complete</td><td>POST</td><td>transaction</td></tr>
-            <tr><td>Incremental Pre-auth</td><td>POST</td><td>transaction</td></tr>
             <tr><td>Pre-auth Reversal</td><td>POST</td><td>transaction</td></tr>
             <tr><td>Search Transaction</td><td>POST</td><td>transactionsearch</td></tr>
             <tr><td>Reprint</td><td>POST</td><td>reprint</td></tr>
@@ -2159,14 +2157,13 @@ pre.hljs { border-radius: 6px; font-size: 11.5px; padding: 12px 14px; overflow-x
         <tbody>
           <tr><td>1</td><td class="flow-txn">PA</td><td>Authorize — reserve funds on the card.</td><td>—</td></tr>
           <tr><td>2a</td><td class="flow-txn">AC</td><td>Complete — capture the final amount.</td><td>Original <code>PA</code> (<code>FuncType: PreAuth</code>)</td></tr>
-          <tr><td>2b</td><td class="flow-txn">PT</td><td>Incremental Pre-auth — increase the reserved amount.</td><td>Original <code>PA</code> (<code>FuncType: PreAuth</code>)</td></tr>
-          <tr><td>2c</td><td class="flow-txn">PR</td><td>Pre-auth Reversal — reverse an open pre-auth.</td><td>Original <code>PA</code> (<code>FuncType: PreAuth</code>)</td></tr>
+          <tr><td>2b</td><td class="flow-txn">PR</td><td>Pre-auth Reversal — reverse an open pre-auth.</td><td>Original <code>PA</code> (<code>FuncType: PreAuth</code>)</td></tr>
         </tbody>
       </table>
       <div class="overview-grid">
         <div class="info-card">
           <h4>Linking follow-up requests</h4>
-          <p>Follow-up types (<code>AC</code>, <code>PT</code>, <code>PR</code>) require <code>lszApprovalCode</code> and <code>lszSTAN</code> in the request. Two ways to obtain them:</p>
+          <p>Follow-up types (<code>AC</code>, <code>PR</code>) require <code>lszApprovalCode</code> and <code>lszSTAN</code> in the request. Two ways to obtain them:</p>
           <ul>
             <li><strong>Option 1 — Search Transaction:</strong> Call <a class="doc-table-ref" href="#searchtransaction">Search Transaction</a> with the correct <code>FuncType</code>, pick a record from <code>Response.Transactions[]</code>, and copy <code>lszApprovalCode</code> / <code>lszSTAN</code>.</li>
             <li><strong>Option 2 — POS-managed:</strong> Store AuthCode and STAN from the original transaction response in your POS database and pass them in the follow-up request.</li>
@@ -2176,7 +2173,7 @@ pre.hljs { border-radius: 6px; font-size: 11.5px; padding: 12px 14px; overflow-x
           <h4>Search Transaction ↔ Pre-auth</h4>
           <p>Use <a class="doc-table-ref" href="#searchtransaction">Search Transaction</a> to list approved records on the terminal before performing a follow-up:</p>
           <ul>
-            <li><code>FuncType: "PreAuth"</code> — find original pre-auths for Complete, Incremental Pre-auth, Pre-auth Reversal, or Pre-auth Inquiry.</li>
+            <li><code>FuncType: "PreAuth"</code> — find original pre-auths for Complete, Pre-auth Reversal, or Pre-auth Inquiry.</li>
             <li><code>FuncType: "PreAuthComplete"</code> — Pre-auth Complete Inquiry search.</li>
           </ul>
           <p style="margin-top:8px;">Search filters are optional, including <code>FuncType</code>.</p>
@@ -2201,7 +2198,7 @@ pre.hljs { border-radius: 6px; font-size: 11.5px; padding: 12px 14px; overflow-x
       </table>
       <div class="info-card" style="margin-top:14px;">
         <h4>After approval</h4>
-        <p>Save <code>lszApprovalCode</code> and <code>lszSTAN</code> from <code>Response.Transaction</code>. You need them for Complete, Incremental Pre-auth or Pre-auth Reversal — either stored in your POS (Option 2) or retrieved later via <a class="doc-table-ref" href="#searchtransaction">Search Transaction</a> with <code>FuncType: "PreAuth"</code> (Option 1). See <a class="doc-table-ref" href="#preauth-family">Pre-auth Guide</a>.</p>
+        <p>Save <code>lszApprovalCode</code> and <code>lszSTAN</code> from <code>Response.Transaction</code>. You need them for Complete or Pre-auth Reversal — either stored in your POS (Option 2) or retrieved later via <a class="doc-table-ref" href="#searchtransaction">Search Transaction</a> with <code>FuncType: "PreAuth"</code> (Option 1). See <a class="doc-table-ref" href="#preauth-family">Pre-auth Guide</a>.</p>
       </div>
     </div>
     <div class="right-col">
@@ -2261,47 +2258,6 @@ pre.hljs { border-radius: 6px; font-size: 11.5px; padding: 12px 14px; overflow-x
     </div>
   </div>
 
-  <!--  TXN SUB: Incremental Pre-auth  -->
-  <div class="section-container txn-subsection" id="preauthtopup">
-    <div class="middle-col">
-      <h3 class="subsection-title">Incremental Pre-auth <span class="txn-type-badge">TxnType: <code>PT</code></span></h3>
-      <div class="section-desc"><p>An Incremental Pre-auth increases the reserved amount of an open pre-auth by adding a new amount to the previous authorization.</p></div>
-      <p class="txn-common-ref">Also uses all <a class="doc-table-ref" href="#transaction">common request fields</a>. Response structure is defined in <a class="doc-table-ref" href="#transaction-response">Transaction Response</a>.</p>
-      <div class="table-label">Type-Specific Request Fields</div>
-      <table class="field-table">
-        <thead><tr><th>Field Name</th><th>Type (Max Length)</th><th>M/O</th><th>Description</th></tr></thead>
-        <tbody>
-          <tr><td class="field-name">TxnType</td><td class="field-type">string(3)</td><td><span class="badge badge-m">M</span></td><td>Must be <code>"PT"</code> (Incremental Pre-auth).</td></tr>
-          <tr><td class="field-name">Amount</td><td class="field-type">long</td><td><span class="badge badge-m">M</span></td><td>Additional amount in cents. Must be greater than 0.</td></tr>
-          <tr><td class="field-name">lszApprovalCode</td><td class="field-type">string</td><td><span class="badge badge-m">M</span></td><td>Approval code from the original Pre-auth.</td></tr>
-          <tr><td class="field-name">lszSTAN</td><td class="field-type">string</td><td><span class="badge badge-m">M</span></td><td>STAN from the original Pre-auth. Search with <code>FuncType: "PreAuth"</code> or use stored <code>PA</code> response values.</td></tr>
-        </tbody>
-      </table>
-      <div class="info-card" style="margin-top:14px;">
-        <h4>Linking to the original pre-auth</h4>
-        <ul>
-          <li><strong>Option 1:</strong> Search with <code>FuncType: "PreAuth"</code>, select a record, use its <code>lszApprovalCode</code> and <code>lszSTAN</code>.</li>
-          <li><strong>Option 2:</strong> Pass AuthCode and STAN saved from the original <code>PA</code> response.</li>
-        </ul>
-      </div>
-    </div>
-    <div class="right-col">
-      <div class="code-block-wrap">
-        <div class="code-block-label">Request Example — Incremental Pre-auth</div>
-        <pre><code class="language-json">{
-  "Merchant": "01",
-  "TxnType": "PT",
-  "Amount": 100,
-  "lszApprovalCode": "328958",
-  "lszSTAN": "000030",
-  "AsyncMode": false,
-  "WithReceiptImageData": true,
-  "ReceiptType": 1
-}</code></pre>
-      </div>
-    </div>
-  </div>
-
   <!--  TXN SUB: Pre-auth Reversal  -->
   <div class="section-container txn-subsection" id="preauthreversal">
     <div class="middle-col">
@@ -2345,7 +2301,7 @@ pre.hljs { border-radius: 6px; font-size: 11.5px; padding: 12px 14px; overflow-x
     <div class="middle-col">
       <h2 class="section-title">Search Transaction</h2>
       <div class="section-desc">
-        <p>This request searches for <strong>approved transactions stored on the terminal</strong> for different purposes — most commonly to find a pre-auth record before performing Complete, Incremental Pre-auth or Pre-auth Reversal. See <a class="doc-table-ref" href="#preauth-family">Pre-auth Guide</a> for how search fits into the pre-auth flow.</p>
+        <p>This request searches for <strong>approved transactions stored on the terminal</strong> for different purposes — most commonly to find a pre-auth record before performing Complete or Pre-auth Reversal. See <a class="doc-table-ref" href="#preauth-family">Pre-auth Guide</a> for how search fits into the pre-auth flow.</p>
         <p>All search filter fields are optional and may be left empty, including <code>FuncType</code>, <code>AuthCode</code>, and <code>Stan</code>.</p>
       </div>
       <div class="table-label">Request Body Fields</div>
@@ -2381,7 +2337,6 @@ pre.hljs { border-radius: 6px; font-size: 11.5px; padding: 12px 14px; overflow-x
           <thead><tr><th>FuncType</th><th>Used to search for the below transactions</th></tr></thead>
           <tbody>
             <tr><td class="field-name">PreAuth</td><td>Pre-auth Complete Transaction.</td></tr>
-            <tr><td class="field-name">PreAuth</td><td>Incremental Pre-auth Transaction.</td></tr>
             <tr><td class="field-name">PreAuth</td><td>Pre-auth Reversal Transaction.</td></tr>
             <tr><td class="field-name">PreAuth</td><td>Pre-auth Inquiry.</td></tr>
             <tr><td class="field-name">PreAuthComplete</td><td>Pre-auth Complete Inquiry.</td></tr>
